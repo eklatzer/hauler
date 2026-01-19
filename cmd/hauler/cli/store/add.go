@@ -436,13 +436,30 @@ func storeChart(ctx context.Context, s *store.Layout, cfg v1.Chart, opts *flags.
 			rendered = map[string]string{}
 		}
 
+		var i = 0
 		for _, manifest := range rendered {
+			// create a filename using the index
+			filename := fmt.Sprintf("manifest-%d.yaml", i)
+
 			matches := imageRegex.FindAllStringSubmatch(manifest, -1)
 			for _, match := range matches {
 				if len(match) > 1 {
+					// write manifest to file
+					if err := os.WriteFile(filename, []byte(manifest), 0644); err != nil {
+						return err
+					}
+
+					// write match to match-%i.txt
+					matchFilename := fmt.Sprintf("match-%d.txt", i)
+					if err := os.WriteFile(matchFilename, []byte(match[1]), 0644); err != nil {
+						return err
+					}
+
 					templateImages = append(templateImages, match[1])
 				}
 			}
+
+			i++
 		}
 
 		// parse helm chart annotations for images
